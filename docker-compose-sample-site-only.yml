@@ -1,0 +1,39 @@
+version: '3.1'
+
+services:
+  database:
+    image: dockersamples/atsea_db
+    environment:
+      POSTGRES_USER: gordonuser
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_DB: atsea
+    ports:
+      - '5432:5432'
+    networks:
+      - back-tier
+    secrets:
+      - postgres_password
+
+  appserver:
+    image: dockersamples/atsea_app
+    container_name: atsea
+    ports:
+      - '8080:8080'
+      - '5005:5005'
+    depends_on:
+      - database
+    networks:
+      - front-tier
+      - back-tier
+    secrets:
+      - postgres_password
+
+networks:
+  front-tier:
+  back-tier:
+  payment:
+    driver: overlay
+
+secrets:
+  postgres_password:
+    file: ./pg_psw

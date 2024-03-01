@@ -1,0 +1,56 @@
+version: '3.1'
+
+services:
+  database:
+    image: dockersamples/atsea_db
+    environment:
+      POSTGRES_USER: gordonuser
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      POSTGRES_DB: atsea
+    ports:
+      - '5432:5432'
+    networks:
+      - back-tier
+    secrets:
+      - postgres_password
+
+  appserver:
+    image: dockersamples/atsea_app
+    container_name: atsea
+    ports:
+      - '8080:8080'
+      - '5005:5005'
+    depends_on:
+      - database
+    networks:
+      - front-tier
+      - back-tier
+    secrets:
+      - postgres_password
+
+  tests:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api_tests
+    ports:
+      - '9323:9323'
+    tty: true
+    environment:
+      - HOST_HAS_GUI=false
+      - BASE_API_URL=http://atsea:8080
+    depends_on:
+      - appserver
+    command: bash -c 'while [[ "$$(curl --connect-timeout 2 -s -o /dev/null -w ''%{http_code}'' http://atsea:8080/api/product/)" != "200" ]]; do echo ..; sleep 5; done; echo backend is up; xvfb-run npm run test'
+    networks:
+      - front-tier
+
+networks:
+  front-tier:
+  back-tier:
+  payment:
+    driver: overlay
+
+secrets:
+  postgres_password:
+    file: ./pg_psw
