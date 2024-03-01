@@ -4,11 +4,13 @@ import customerRequests from '../requests/customer/customerRequests';
 import { parseCustomerIdFromResponse } from '../utils/generalFunctions';
 import { buildFakeCustomer } from '../testData/fakeData';
 import { customer } from '../utils/types';
+import { Session } from '../helpers/session';
 
 // declare the types of your fixtures
 interface MyFixtures {
 	apiContext: APIRequestContext;
 	createCustomer: APIResponse;
+	userSession: Session;
 }
 
 // extend base test to be used in multiple test files. Each of them will get the fixtures
@@ -22,6 +24,8 @@ export const test = base.extend<MyFixtures>({
 				Accept: 'application/json',
 				'Content-type': 'application/json',
 			},
+			// clean storage state for each session
+			storageState: undefined,
 		});
 
 		// Use the fixture value in the test
@@ -45,6 +49,19 @@ export const test = base.extend<MyFixtures>({
 		// Clean up the fixture
 		const deleteResponse: APIResponse = await customerRequests.deleteCustomer(apiContext, customerId);
 		expect(deleteResponse.ok()).toBeTruthy();
+	},
+
+	// eslint-disable-next-line no-empty-pattern
+	// create user session
+	userSession: async ({apiContext}, use) => {
+		// Set up the fixture
+		const session: Session = await Session.create(apiContext);
+
+		// Use the fixture value in the test
+		await use(session);
+
+		// clean up the fixture
+		await apiContext.dispose();
 	},
 });
 
