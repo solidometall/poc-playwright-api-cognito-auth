@@ -16,7 +16,7 @@ Build and run the containers:
 
 ## From local environment
 If you want to run tests from your local environment against the sample site,
-first of all you will need to install project dependencies using maven:
+first of all you will need to install project dependencies:
 
 `npm install`
 
